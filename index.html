@@ -179,15 +179,18 @@ h1,h2,h3,.display{font-family:"Manrope",system-ui,sans-serif; letter-spacing:-0.
 .top-item .rank-track{margin-left:28px; width:calc(100% - 28px);}
 .top-item .t-sub{margin-left:28px; margin-top:3px; font-size:11px; color:var(--muted);}
 
-/* ---------- filter panel (ventas): pills por año / mes ---------- */
+/* ---------- filter panel (ventas / compras): pills por año / mes ---------- */
 .filter-panel{
-  display:flex; align-items:flex-start; gap:26px; flex-wrap:wrap;
+  display:flex; flex-direction:column; gap:12px;
   background:var(--surface); border:1px solid var(--border); border-radius:16px;
   padding:16px 20px; box-shadow:var(--shadow); margin-bottom:18px;
 }
-.filter-panel .filter-group{display:flex; flex-direction:column; gap:9px; min-width:0;}
-.filter-panel .fg-title{font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);}
-.filter-panel .pill-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px; max-width:620px;}
+.filter-panel .filter-row{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+.filter-panel .fg-title{
+  font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);
+  flex:none; min-width:34px;
+}
+.filter-panel .pill-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px; flex:1; min-width:0;}
 .pill{
   font-family:"Inter",sans-serif; font-weight:700; font-size:12.5px;
   border-radius:999px; padding:7px 15px; cursor:pointer; white-space:nowrap;
@@ -199,11 +202,7 @@ h1,h2,h3,.display{font-family:"Manrope",system-ui,sans-serif; letter-spacing:-0.
 .pill[aria-pressed="false"]{
   background:var(--surface-2); color:var(--muted); border-color:var(--border);
 }
-.pill-reset{
-  background:var(--surface-2); color:var(--ink-2); border:1px solid var(--border);
-  margin-right:2px;
-}
-.pill-reset:hover{opacity:1; color:var(--ink); border-color:var(--baseline);}
+.pill-reset{ margin-right:2px; }
 .filter-panel .fnote{font-size:11.5px; color:var(--muted); margin-left:auto; align-self:center; white-space:nowrap;}
 
 footer.notes{
@@ -240,19 +239,19 @@ footer.notes ul{margin:6px 0 0; padding-left:18px;}
   <!-- ============ VENTAS ============ -->
   <section data-tab-panel="ventas">
     <div class="filter-panel">
-      <div class="filter-group">
+      <div class="filter-row">
         <span class="fg-title">Año</span>
         <div class="pill-row" id="anio-pills">
-          <button type="button" class="pill pill-reset" data-role="all">Todos</button>
+          <button type="button" class="pill pill-reset" data-role="all" aria-pressed="true">Todos</button>
         </div>
+        <span class="fnote" id="ventas-filter-note"></span>
       </div>
-      <div class="filter-group">
+      <div class="filter-row">
         <span class="fg-title">Mes</span>
         <div class="pill-row" id="mes-pills">
-          <button type="button" class="pill pill-reset" data-role="all">Todos</button>
+          <button type="button" class="pill pill-reset" data-role="all" aria-pressed="true">Todos</button>
         </div>
       </div>
-      <span class="fnote" id="ventas-filter-note"></span>
     </div>
     <div class="kpi-grid" id="kpi-ventas"></div>
     <div class="panel">
@@ -278,19 +277,19 @@ footer.notes ul{margin:6px 0 0; padding-left:18px;}
   <!-- ============ RESUMEN + COMPRAS ============ -->
   <section data-tab-panel="resumen" hidden>
     <div class="filter-panel">
-      <div class="filter-group">
+      <div class="filter-row">
         <span class="fg-title">Año</span>
         <div class="pill-row" id="anio-pills-compras">
-          <button type="button" class="pill pill-reset" data-role="all">Todos</button>
+          <button type="button" class="pill pill-reset" data-role="all" aria-pressed="true">Todos</button>
         </div>
+        <span class="fnote" id="compras-filter-note"></span>
       </div>
-      <div class="filter-group">
+      <div class="filter-row">
         <span class="fg-title">Mes</span>
         <div class="pill-row" id="mes-pills-compras">
-          <button type="button" class="pill pill-reset" data-role="all">Todos</button>
+          <button type="button" class="pill pill-reset" data-role="all" aria-pressed="true">Todos</button>
         </div>
       </div>
-      <span class="fnote" id="compras-filter-note"></span>
     </div>
     <div class="kpi-grid" id="kpi-resumen"></div>
     <div class="panel">
@@ -495,10 +494,22 @@ footer.notes ul{margin:6px 0 0; padding-left:18px;}
     btn.setAttribute('aria-pressed', pressed ? 'false' : 'true');
   }
 
-  anioAllBtn.addEventListener('click', () => { anioPills.forEach(b => b.setAttribute('aria-pressed', 'true')); renderVentasTab(); });
-  mesAllBtn.addEventListener('click', () => { mesPills.forEach(b => b.setAttribute('aria-pressed', 'true')); renderVentasTab(); });
-  anioPills.forEach(b => b.addEventListener('click', () => { togglePill(b); renderVentasTab(); }));
-  mesPills.forEach(b => b.addEventListener('click', () => { togglePill(b); renderVentasTab(); }));
+  function syncAllPill(allBtn, pills){
+    const allOn = pills.every(b => b.getAttribute('aria-pressed') === 'true');
+    allBtn.setAttribute('aria-pressed', allOn ? 'true' : 'false');
+  }
+
+  function toggleAllPill(allBtn, pills){
+    const allOn = pills.every(b => b.getAttribute('aria-pressed') === 'true');
+    const next = allOn ? 'false' : 'true';
+    pills.forEach(b => b.setAttribute('aria-pressed', next));
+    allBtn.setAttribute('aria-pressed', next);
+  }
+
+  anioAllBtn.addEventListener('click', () => { toggleAllPill(anioAllBtn, anioPills); renderVentasTab(); });
+  mesAllBtn.addEventListener('click', () => { toggleAllPill(mesAllBtn, mesPills); renderVentasTab(); });
+  anioPills.forEach(b => b.addEventListener('click', () => { togglePill(b); syncAllPill(anioAllBtn, anioPills); renderVentasTab(); }));
+  mesPills.forEach(b => b.addEventListener('click', () => { togglePill(b); syncAllPill(mesAllBtn, mesPills); renderVentasTab(); }));
 
   function selectedSet(pills){
     return new Set(pills.filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.value));
@@ -628,10 +639,10 @@ footer.notes ul{margin:6px 0 0; padding-left:18px;}
     return btn;
   });
 
-  anioAllBtnC.addEventListener('click', () => { anioPillsC.forEach(b => b.setAttribute('aria-pressed', 'true')); renderComprasTab(); });
-  mesAllBtnC.addEventListener('click', () => { mesPillsC.forEach(b => b.setAttribute('aria-pressed', 'true')); renderComprasTab(); });
-  anioPillsC.forEach(b => b.addEventListener('click', () => { togglePill(b); renderComprasTab(); }));
-  mesPillsC.forEach(b => b.addEventListener('click', () => { togglePill(b); renderComprasTab(); }));
+  anioAllBtnC.addEventListener('click', () => { toggleAllPill(anioAllBtnC, anioPillsC); renderComprasTab(); });
+  mesAllBtnC.addEventListener('click', () => { toggleAllPill(mesAllBtnC, mesPillsC); renderComprasTab(); });
+  anioPillsC.forEach(b => b.addEventListener('click', () => { togglePill(b); syncAllPill(anioAllBtnC, anioPillsC); renderComprasTab(); }));
+  mesPillsC.forEach(b => b.addEventListener('click', () => { togglePill(b); syncAllPill(mesAllBtnC, mesPillsC); renderComprasTab(); }));
 
   function describeSelectionC(selYears, selMeses){
     const aniosTxt = selYears.size === allYearsC.length ? 'Todos' : (Array.from(selYears).sort().join(', ') || 'ninguno');
@@ -675,9 +686,7 @@ footer.notes ul{margin:6px 0 0; padding-left:18px;}
       kpiCard('Ventas totales', fmtUSD0.format(a.vTotal), a.vN.toLocaleString('es-EC') + ' comprobantes', true),
       kpiCard('Compras totales', fmtUSD0.format(a.cTotal), a.cN.toLocaleString('es-EC') + ' facturas'),
       kpiCard('Diferencia venta – compra', fmtUSD0.format(margen), `<span class="${margen>=0?'good':'critical'}">${margenPct.toFixed(1)}% sobre ventas</span>`),
-      kpiCard('Ticket promedio venta', fmtUSD2.format(vTicket)),
-      kpiCard('Ticket promedio compra', fmtUSD2.format(cTicket)),
-      kpiCard('Proveedores activos', a.byProv.size.toLocaleString('es-EC'), desc)
+      kpiCard('Ticket promedio venta', fmtUSD2.format(vTicket))
     );
 
     // Chart: Ventas vs Compras por mes (unión de meses presentes en la selección)
